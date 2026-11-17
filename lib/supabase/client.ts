@@ -1,5 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { BASE } from "../base";
 
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -20,7 +21,7 @@ export function supabaseBrowser(): SupabaseClient {
 export async function sendEmailCode(email: string): Promise<void> {
   const { error } = await supabaseBrowser().auth.signInWithOtp({
     email: email.trim(),
-    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    options: { emailRedirectTo: `${window.location.origin}${BASE}/today/` },
   });
   if (error) throw error;
 }

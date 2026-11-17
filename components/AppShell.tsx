@@ -82,10 +82,13 @@ function SignIn() {
               });
             }}
           >
-            <p className="text-muted text-sm text-center">Sign in with your email. We&apos;ll send you a 6-digit code.</p>
+            <p className="text-muted text-sm text-center">Sign in with your email. We&apos;ll email you a sign-in code.</p>
             <input className="input" type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
             <button className="btn btn-primary w-full justify-center" disabled={busy || !email}>
               {busy ? "Sending…" : "Send code"}
+            </button>
+            <button type="button" className="w-full text-xs text-muted hover:text-text disabled:opacity-40" disabled={!email} onClick={() => (setSent(true), setMsg(null))}>
+              I already have a code
             </button>
           </form>
         ) : (
@@ -102,7 +105,7 @@ function SignIn() {
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={8}
-              placeholder="000000"
+              placeholder="code"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/D/g, ""))}
               autoFocus
