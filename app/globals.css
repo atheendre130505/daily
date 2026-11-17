@@ -1,26 +1,107 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #191919;
+  --panel: #202020;
+  --panel-2: #262626;
+  --line: #2f2f2f;
+  --text: #e9e9e7;
+  --muted: #9b9b9b;
+  /* Monochrome: the "accent" is white, highlights are faint white, warnings are light grey. */
+  --accent: #e9e9e7;
+  --accent-soft: rgba(255, 255, 255, 0.07);
+  --danger: #c4c4c4;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Notion-like checkbox */
+.check {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #5a5a5a;
+  border-radius: 4px;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+  flex: none;
+}
+.check:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.check:checked::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid var(--bg);
+  border-bottom: 2px solid var(--bg);
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.btn:hover {
+  background: #2c2c2c;
+}
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  font-weight: 500;
+}
+.btn-primary:hover {
+  background: #ffffff;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.input {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  width: 100%;
+}
+.input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* BlockNote: match app background */
+.bn-container[data-color-scheme="dark"] {
+  --bn-colors-editor-background: var(--bg);
+  --bn-colors-menu-background: var(--panel);
 }
