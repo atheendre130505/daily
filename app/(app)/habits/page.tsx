@@ -32,6 +32,7 @@ export default function HabitsPage() {
   const allHabits = items.filter((i) => i.type === "habit");
   const visible = useMemo(() => allHabits.filter((h) => showHidden || !h.hidden), [allHabits, showHidden]);
   const segments = useMemo(() => habitSegments(visible, dateRange(from, to)), [visible, from, to]);
+  const shown = segments.filter((s) => s.habits.length > 0);
   const hiddenCount = allHabits.filter((h) => h.hidden).length;
   const stopped = allHabits
     .filter((h) => h.active_until && h.active_until < today)
@@ -69,9 +70,11 @@ export default function HabitsPage() {
       </div>
 
       <div className="space-y-8">
-        {segments.map((seg) => (
-          <SegmentTable key={seg.from} seg={seg} today={today} showHeader={segments.length > 1} onEdit={setEditing} />
+        {/* stretches with no habits at all (e.g. before your first day) aren't shown */}
+        {shown.map((seg, i) => (
+          <SegmentTable key={seg.from} seg={i === 0 ? { ...seg, started: [], stopped: [] } : seg} today={today} showHeader={shown.length > 1} onEdit={setEditing} />
         ))}
+        {!shown.length && <p className="text-sm text-muted border-t border-line pt-3">No habits this month.</p>}
       </div>
 
       {stopped.length > 0 && (

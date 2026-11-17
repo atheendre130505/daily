@@ -214,11 +214,15 @@ export function ItemEditor({ item, onClose }: { item: Item; onClose: () => void 
         )}
 
         <div className="flex gap-2 pt-2">
-          {!isNew && !locked && (
+          {!isNew && (
             <button
               className="btn text-danger"
               onClick={() => {
-                if (confirm(`Delete "${draft.title}"?`)) {
+                // Habits with past days: deleting removes them from your history and past XP too (Stop keeps it).
+                const msg = locked
+                  ? `Delete "${draft.title}" completely?\n\nIts past ticks disappear from your checklist, and the XP they earned is recalculated as if it never existed. To keep its history, use "Stop" instead.\n\n(You can still Undo right after.)`
+                  : `Delete "${draft.title}"?`;
+                if (confirm(msg)) {
                   deleteItem(draft.id);
                   onClose();
                 }
@@ -277,7 +281,7 @@ function StopControls({ item, onDone }: { item: Item; onDone: () => void }) {
   return (
     <div className="rounded-md border border-line p-3 space-y-2">
       <div className="text-sm">Stop this habit</div>
-      <div className="text-xs text-muted">Its ticks are kept. From the next day the checklist starts a new table without it. Habits with past days can&apos;t be deleted, so your history stays intact.</div>
+      <div className="text-xs text-muted">Its ticks are kept. From the next day the checklist starts a new table without it. To remove it completely (history included), use Delete below.</div>
       <div className="flex flex-wrap gap-2">
         <button className="btn text-xs" onClick={() => stop(today)}>Stop after today</button>
         {startedBeforeToday && (
