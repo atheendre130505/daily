@@ -9,6 +9,10 @@ export interface Repo {
   saveCompletion(c: Completion): Promise<void>;
   savePage(page: Page): Promise<void>;
   subscribe(onChange: (e: ChangeEvent) => void): () => void;
+  /** The day you're on (null if never set, or the database isn't updated yet). */
+  loadDay(): Promise<string | null>;
+  saveDay(day: string): Promise<void>;
+  onDayChange(cb: (day: string | null) => void): () => void;
 }
 
 // ---------- Supabase ----------
@@ -51,6 +55,26 @@ function supabaseRepo(): Repo {
           onChange({ table, row } as ChangeEvent);
         });
       }
+      ch.subscribe();
+      return () => {
+        sb.removeChannel(ch);
+      };
+    },
+    async loadDay() {
+      const { data, error } = await sb.from("user_settings").select("current_day").maybeSingle();
+      if (error) return null;
+      return (data?.current_day as string | null) ?? null;
+    },
+    async saveDay(day) {
+      const { error } = await sb.from("user_settings").upsert({ current_day: day });
+      if (error) throw error;
+    },
+    onDayChange(cb) {
+      const ch = sb.channel("my-day");
+      ch.on("postgres_changes", { event: "*", schema: "public", table: "user_settings" }, (payload) => {
+        const row = payload.new as { current_day?: string | null } | null;
+        if (row && "current_day" in row) cb(row.current_day ?? null);
+      });
       ch.subscribe();
       return () => {
         sb.removeChannel(ch);

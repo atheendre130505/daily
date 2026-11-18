@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { dateRange, dayMonthLabel, fromDateKey, monthLabel, shortDayLabel, toDateKey, todayKey } from "@/lib/dates";
+import { dateRange, dayMonthLabel, fromDateKey, monthLabel, shortDayLabel, toDateKey } from "@/lib/dates";
 import { habitDueOn } from "@/lib/recurrence";
 import { completionRate, currentStreak } from "@/lib/stats";
 import { habitSegments, type Segment } from "@/lib/segments";
 import { ItemEditor, blankItem, restartHabit } from "@/components/ItemEditor";
 import { StopHabitsDialog } from "@/components/StopHabitsDialog";
+import { NextDayButton } from "@/components/NextDayButton";
 import type { Item } from "@/lib/types";
 
 function monthBounds(anchor: string): [string, string] {
@@ -21,13 +22,13 @@ const norm = (h: Item) => h.title.trim().toLowerCase();
 const rangeLabel = (a: string, b: string) => (a === b ? shortDayLabel(a) : `${shortDayLabel(a)} – ${shortDayLabel(b)}`);
 
 export default function HabitsPage() {
-  const { items, isDone, saveItem } = useStore();
-  const [anchor, setAnchor] = useState(todayKey());
+  const { items, isDone, saveItem, day: today } = useStore();
+  const [viewAnchor, setAnchor] = useState<string | null>(null);
+  const anchor = viewAnchor ?? today;
   const [showHidden, setShowHidden] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
   const [stopping, setStopping] = useState(false);
   const [from, to] = monthBounds(anchor);
-  const today = todayKey();
 
   const allHabits = items.filter((i) => i.type === "habit");
   const visible = useMemo(() => allHabits.filter((h) => showHidden || !h.hidden), [allHabits, showHidden]);
@@ -48,19 +49,20 @@ export default function HabitsPage() {
   return (
     <div className="p-4 md:p-10 max-w-6xl">
       <h1 className="text-3xl md:text-4xl font-bold">Daily Checklist</h1>
-      <p className="text-muted mt-1">Tick today&apos;s boxes. Past and future days are locked. Starting or stopping a habit starts a new table from that day.</p>
+      <p className="text-muted mt-1">Tick today&apos;s boxes. Past and future days are locked. Your day only changes when you press Start next day, not at midnight. Starting or stopping a habit starts a new table from that day.</p>
 
       <div className="flex flex-wrap items-center gap-2 mt-6 mb-3">
         <button className="btn" onClick={() => shift(-1)}>‹</button>
         <div className="font-medium w-28 text-center">{monthLabel(from)}</div>
         <button className="btn" onClick={() => shift(1)}>›</button>
-        <button className="btn" onClick={() => setAnchor(today)}>Today</button>
+        <button className="btn" onClick={() => setAnchor(null)}>Today</button>
         <div className="flex-1" />
         {hiddenCount > 0 && (
           <button className="btn text-xs" onClick={() => setShowHidden((s) => !s)}>
             {showHidden ? "Hide" : "Show"} hidden ({hiddenCount})
           </button>
         )}
+        <NextDayButton />
         <button className="btn" onClick={() => setStopping(true)}>
           ■ Stop habits…
         </button>

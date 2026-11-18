@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, Completion, Item, Page, Snapshot } from "./types";
 import { createRepo, type Repo } from "./repo";
-import { dayMonthLabel, todayKey } from "./dates";
+import { addDays, calendarTodayKey, dayMonthLabel, setMyDay, todayKey } from "./dates";
 
 /** One undoable change: what to show, and the rows that put things back the way they were. */
 interface HistoryEntry {
@@ -28,6 +28,11 @@ interface Store extends Snapshot {
   /** Most recent undoable change, or null. */
   lastChange: HistoryEntry | null;
   undo(): void;
+  /** The day you're on. It only changes when you press "Next day" (never at midnight). */
+  day: string;
+  /** The next day can be started (it has begun on the calendar). */
+  canStartNextDay: boolean;
+  startNextDay(): void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -67,6 +72,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const history = useRef<HistoryEntry[]>([]);
   const nextId = useRef(1);
   const [lastChange, setLastChange] = useState<HistoryEntry | null>(null);
+  const [day, setDayState] = useState<string>(todayKey());
+  const [clock, setClock] = useState(calendarTodayKey());
+
+  const applyDay = useCallback((d: string | null) => {
+    setMyDay(d);
+    setDayState(todayKey());
+  }, []);
 
   const apply = useCallback((e: ChangeEvent) => {
     if (e.table === "items") {
@@ -82,9 +94,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const repo = createRepo();
     repoRef.current = repo;
     let off = () => {};
-    repo
-      .load()
-      .then((s) => {
+    let offDay = () => {};
+    // your day: if you've been away for days, catch up to yesterday (you can still press Next day from there)
+    const syncDay = async () => {
+      setClock(calendarTodayKey());
+      let d = await repo.loadDay();
+      const floor = addDays(calendarTodayKey(), -1);
+      if (!d) d = calendarTodayKey();
+      if (d < floor) d = floor;
+      applyDay(d);
+      return d;
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") syncDay();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    const tick = setInterval(() => setClock(calendarTodayKey()), 60_000);
+    Promise.all([repo.load(), syncDay()])
+      .then(async ([s, d]) => {
+        // save it so phone and PC agree on the day (errors ignored if the database isn't updated yet)
+        repo.saveDay(d).catch(() => {});
+        offDay = repo.onDayChange((nd) => nd && applyDay(nd));
         setItems(s.items);
         setPages(s.pages);
         setDone(new Map(s.completions.map((c) => [ckey(c.item_id, c.date), c])));
@@ -92,8 +122,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         off = repo.subscribe(apply);
       })
       .catch((e) => setError(String(e?.message ?? e)));
-    return () => off();
-  }, [apply]);
+    return () => {
+      off();
+      offDay();
+      clearInterval(tick);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [apply, applyDay]);
 
   const run = useCallback((p: Promise<void>) => p.catch((e) => setError(String(e?.message ?? e))), []);
 
@@ -144,6 +179,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       mode: "supabase",
       lastChange,
       undo,
+      day,
+      canStartNextDay: day < clock,
+      startNextDay() {
+        const next = addDays(day, 1);
+        if (next > calendarTodayKey()) {
+          setError("The next day hasn't started yet.");
+          setTimeout(() => setError(null), 4000);
+          return;
+        }
+        const prevDay = day;
+        applyDay(next);
+        repoRef.current!.saveDay(next).catch((e) => {
+          applyDay(prevDay);
+          setError(`Couldn't start the next day: ${e?.message ?? e}`);
+        });
+      },
       isDone: (itemId, date) => done.get(ckey(itemId, date))?.done ?? false,
       toggle(itemId, date) {
         if (date !== todayKey()) {
@@ -208,7 +259,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         for (const p of affected) write({ table: "pages", row: { ...p, deleted_at: now } });
       },
     };
-  }, [items, pages, done, ready, error, lastChange, undo, record, write]);
+  }, [items, pages, done, ready, error, lastChange, undo, record, write, day, clock, applyDay]);
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }

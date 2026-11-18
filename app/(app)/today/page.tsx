@@ -5,20 +5,21 @@ import { useRouter } from "next/navigation";
 import { GameSummary } from "@/components/GameSummary";
 import { useStore } from "@/lib/store";
 import { useGame } from "@/lib/useGame";
-import { addDays, fromDateKey, longDayLabel, timeLabel, todayKey } from "@/lib/dates";
+import { addDays, fromDateKey, longDayLabel, timeLabel } from "@/lib/dates";
 import { eventOccurrences, habitDueOn } from "@/lib/recurrence";
 import { DIFFICULTY_LABELS, settingsOn } from "@/lib/habitSettings";
 import { currentStreak } from "@/lib/stats";
 import { ItemEditor, blankItem } from "@/components/ItemEditor";
+import { LateNightNote, NextDayButton } from "@/components/NextDayButton";
 import { newPage, type Item } from "@/lib/types";
 
 export default function TodayPage() {
-  const { items, pages, isDone, toggle, savePage } = useStore();
+  const { items, pages, isDone, toggle, savePage, day: today } = useStore();
   const { game } = useGame();
   const router = useRouter();
-  const [day, setDay] = useState(todayKey());
+  const [viewDay, setDay] = useState<string | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
-  const today = todayKey();
+  const day = viewDay ?? today;
   const isToday = day === today;
 
   const habits = items
@@ -49,9 +50,16 @@ export default function TodayPage() {
           <h1 className="text-2xl md:text-3xl font-bold">{isToday ? "Today" : longDayLabel(day)}</h1>
           <div className="text-muted text-sm">{isToday ? longDayLabel(day) : day < today ? "Past day · view only" : "Upcoming · view only"}</div>
         </div>
-        {!isToday && <button className="btn" onClick={() => setDay(today)}>Today</button>}
+        {!isToday && <button className="btn" onClick={() => setDay(null)}>Today</button>}
         <button className="btn" onClick={() => setDay(addDays(day, 1))}>›</button>
       </header>
+
+      {isToday && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-0"><LateNightNote /></div>
+          <NextDayButton />
+        </div>
+      )}
 
       {isToday && <GameSummary game={game} />}
 

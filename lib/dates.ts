@@ -12,8 +12,20 @@ export function fromDateKey(key: string): Date {
   return new Date(y, m - 1, d);
 }
 
-export function todayKey(): string {
+/** The real calendar date. */
+export function calendarTodayKey(): string {
   return toDateKey(new Date());
+}
+
+// The day you're on. It doesn't change at midnight; you move on with "Next day" (see store).
+let myDay: string | null = null;
+export function setMyDay(d: string | null) {
+  myDay = d;
+}
+
+/** The day you're on ("today" in the app): your current day if set, else the calendar date. */
+export function todayKey(): string {
+  return myDay ?? calendarTodayKey();
 }
 
 export function addDays(key: string, n: number): string {
