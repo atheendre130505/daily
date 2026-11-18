@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { StoreProvider, useStore } from "@/lib/store";
 import { migrateCookieSession, sendEmailCode, signInWithPassword, supabaseBrowser, supabaseConfigured, verifyEmailCode } from "@/lib/supabase/client";
-import { BASE } from "@/lib/base";
 import { PanelButton, UIProvider, useUI } from "@/lib/ui";
 import { UndoButton, UndoToast } from "./UndoBar";
 import { Icon } from "./Icon";
@@ -30,8 +29,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
-      navigator.serviceWorker.register(`${BASE}/sw.js`, { scope: `${BASE}/` }).catch(() => {});
+    // plain web page: remove any old offline cache so a reload always shows the latest version
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister())).catch(() => {});
+      if ("caches" in window) caches.keys().then((ks) => ks.forEach((k) => caches.delete(k))).catch(() => {});
     }
   }, []);
 

@@ -77,9 +77,10 @@ export default function SettingsPage() {
       )}
 
       <section className="space-y-2">
-        <h2 className="font-semibold">Install on your phone</h2>
+        <h2 className="font-semibold">On your phone</h2>
         <p className="text-sm text-muted">
-          Open this site on your phone. On iPhone use Safari: Share, then Add to Home Screen. On Android use Chrome: menu, then Install app.
+          Daily is a normal web page, nothing to install. Open atheendre130505.github.io/daily in your browser and bookmark it, or use the
+          browser menu, then Add to Home Screen, for a shortcut. Reloading always shows the latest version.
         </p>
       </section>
 

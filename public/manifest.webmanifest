@@ -3,7 +3,7 @@
   "short_name": "Daily",
   "description": "Habits, calendar and notes",
   "start_url": "./today/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#191919",
   "theme_color": "#191919",
   "icons": [
