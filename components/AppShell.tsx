@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { StoreProvider, useStore } from "@/lib/store";
-import { sendEmailCode, supabaseBrowser, supabaseConfigured, verifyEmailCode } from "@/lib/supabase/client";
+import { migrateCookieSession, sendEmailCode, signInWithPassword, supabaseBrowser, supabaseConfigured, verifyEmailCode } from "@/lib/supabase/client";
 import { BASE } from "@/lib/base";
 import { PanelButton, UIProvider, useUI } from "@/lib/ui";
 import { UndoButton, UndoToast } from "./UndoBar";
@@ -23,7 +23,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!supabaseConfigured) return;
     const sb = supabaseBrowser();
-    sb.auth.getSession().then(({ data }) => setAuth(data.session ? "in" : "out"));
+    // carry over an older cookie sign-in first, so this device stays signed in
+    migrateCookieSession().then(() => sb.auth.getSession()).then(({ data }) => setAuth(data.session ? "in" : "out"));
     const { data } = sb.auth.onAuthStateChange((_e, s) => setAuth(s ? "in" : "out"));
     return () => data.subscription.unsubscribe();
   }, []);
@@ -49,8 +50,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 function SignIn() {
   const [email, setEmail] = useState("");
+  const [password, setPw] = useState("");
   const [code, setCode] = useState("");
-  const [sent, setSent] = useState(false);
+  const [mode, setMode] = useState<"password" | "code" | "codeSent">("password");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -71,35 +73,37 @@ function SignIn() {
     <div className="min-h-dvh grid place-items-center p-6">
       <div className="max-w-sm w-full space-y-4">
         <h1 className="text-3xl font-bold text-center">Daily</h1>
-        {!sent ? (
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              run(async () => {
-                await sendEmailCode(email);
-                setSent(true);
-              });
-            }}
-          >
-            <p className="text-muted text-sm text-center">Sign in with your email. We&apos;ll email you a sign-in code.</p>
-            <input className="input" type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <button className="btn btn-primary w-full justify-center" disabled={busy || !email}>
-              {busy ? "Sending…" : "Send code"}
+        <input className="input" type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+
+        {mode === "password" && (
+          <form className="space-y-3" onSubmit={(e) => (e.preventDefault(), run(() => signInWithPassword(email, password)))}>
+            <input className="input" type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPw(e.target.value)} />
+            <button className="btn btn-primary w-full justify-center" disabled={busy || !email || !password}>
+              {busy ? "Signing in…" : "Sign in"}
             </button>
-            <button type="button" className="w-full text-xs text-muted hover:text-text disabled:opacity-40" disabled={!email} onClick={() => (setSent(true), setMsg(null))}>
-              I already have a code
+            <p className="text-xs text-muted text-center">You stay signed in on this device until you sign out.</p>
+            <button type="button" className="w-full text-xs text-muted hover:text-text" onClick={() => (setMode("code"), setMsg(null))}>
+              No password yet? Use a sign-in code instead
             </button>
           </form>
-        ) : (
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              run(() => verifyEmailCode(email, code));
-            }}
-          >
-            <p className="text-muted text-sm text-center">Enter the code sent to {email}.</p>
+        )}
+
+        {mode === "code" && (
+          <div className="space-y-3">
+            <button className="btn btn-primary w-full justify-center" disabled={busy || !email} onClick={() => run(async () => (await sendEmailCode(email), setMode("codeSent")))}>
+              {busy ? "Sending…" : "Email me a code"}
+            </button>
+            <button type="button" className="w-full text-xs text-muted hover:text-text disabled:opacity-40" disabled={!email} onClick={() => (setMode("codeSent"), setMsg(null))}>
+              I already have a code
+            </button>
+            <button type="button" className="w-full text-xs text-muted hover:text-text" onClick={() => (setMode("password"), setMsg(null))}>
+              Back to password
+            </button>
+          </div>
+        )}
+
+        {mode === "codeSent" && (
+          <form className="space-y-3" onSubmit={(e) => (e.preventDefault(), run(() => verifyEmailCode(email, code)))}>
             <input
               className="input text-center text-2xl tracking-[0.4em] tabular-nums"
               inputMode="numeric"
@@ -113,10 +117,9 @@ function SignIn() {
             <button className="btn btn-primary w-full justify-center" disabled={busy || code.length < 6}>
               {busy ? "Checking…" : "Sign in"}
             </button>
-            <div className="flex justify-between text-xs text-muted">
-              <button type="button" className="hover:text-text" onClick={() => (setSent(false), setCode(""), setMsg(null))}>Use a different email</button>
-              <button type="button" className="hover:text-text" disabled={busy} onClick={() => run(() => sendEmailCode(email), "A new code is on its way.")}>Resend code</button>
-            </div>
+            <button type="button" className="w-full text-xs text-muted hover:text-text" onClick={() => (setMode("password"), setCode(""), setMsg(null))}>
+              Back to password
+            </button>
           </form>
         )}
         {msg && <p className="text-sm text-center">{msg}</p>}
