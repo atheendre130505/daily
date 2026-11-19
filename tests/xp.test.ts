@@ -45,9 +45,9 @@ describe("habit XP", () => {
     expect(fresh.earn).toBe(fresh.base);
   });
 
-  it("missing costs less than ticking earns", () => {
+  it("missing costs exactly what ticking earns", () => {
     const v = habitValue(habit({ difficulty: 4 }), DAY, none);
-    expect(v.miss).toBeLessThan(v.earn);
+    expect(v.miss).toBe(v.earn);
   });
 });
 

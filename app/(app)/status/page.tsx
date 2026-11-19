@@ -128,6 +128,7 @@ export default function StatusPage() {
         <details className="rounded-sm border border-line p-3">
           <summary className="cursor-pointer font-semibold">How it works</summary>
           <ul className="list-disc pl-5 mt-2 space-y-1 text-muted">
+            <li>Each habit is worth some XP (shown on Today). Tick it and you gain that XP; miss it and you lose the same amount.</li>
             <li>Each day with habits due is a quest. Tick at least the required % to clear it.</li>
             <li>Cleared: +40 XP (+10 per difficulty step, +20 for a perfect day), boosted by up to 50% for a clear streak.</li>
             <li>Failed: you lose XP in proportion to how much you missed (at least 10). Days you don&apos;t open the app count as 0%.</li>

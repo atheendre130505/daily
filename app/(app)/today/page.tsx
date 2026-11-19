@@ -91,8 +91,8 @@ export default function TodayPage() {
                 {h.reminder_time && <span className="text-xs text-muted">at {h.reminder_time.slice(0, 5)}</span>}
                 <span className="text-xs text-muted w-14 text-right">{DIFFICULTY_LABELS[settingsOn(h, day).difficulty]}</span>
                 {v && (
-                  <span className="text-xs w-16 text-right tabular-nums" title={`Miss it: −${v.miss} XP`}>
-                    {done ? `+${v.earn} XP` : <span className="text-muted">+{v.earn} XP</span>}
+                  <span className="text-xs w-16 text-right tabular-nums" title={`Tick it: +${v.earn} XP · miss it: −${v.miss} XP`}>
+                    {done ? `+${v.earn} XP` : <span className="text-muted">±{v.earn} XP</span>}
                   </span>
                 )}
                 <span className="text-xs text-muted w-16 text-right">streak {currentStreak(h, isDone, today)}</span>

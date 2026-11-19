@@ -9,7 +9,7 @@
  *     personal hardness 0.75 (you always do it) … 1.5 (you rarely do it), from your last 28 scheduled days
  *     frequency         √(7 ÷ times scheduled per week): daily 1.0 · 3×/week 1.53 · weekly 2.65
  *     streak bonus      +4% per consecutive day done, up to +60%
- * A missed habit costs 60% of its value.
+ * A missed habit costs exactly what ticking it would have earned that day.
  *
  * Daily quest: tick at least the required % of the day's habits.
  *   cleared → quest bonus (10 + 5 per difficulty step, +10 for a perfect day, boosted by your clear streak)
@@ -28,7 +28,6 @@ export const MAX_LEVEL = 100;
 export const DIFFICULTY_WEIGHT = [0, 0.6, 0.8, 1.0, 1.35, 1.75];
 const PROMOTE_AT = 0.7;
 const DEMOTE_BELOW = 0.4;
-const MISS_FACTOR = 0.6;
 
 /** XP needed to go from `level` to `level + 1`. */
 export function xpToNext(level: number): number {
@@ -77,7 +76,7 @@ type IsDone = (itemId: string, date: string) => boolean;
 export interface HabitValue {
   habitId: string;
   title: string;
-  base: number; // value before the streak bonus (also the basis of the miss penalty)
+  base: number; // value before the streak bonus
   earn: number; // XP for ticking it today, including streak bonus
   miss: number; // XP lost if missed
   difficulty: number;
@@ -114,12 +113,13 @@ export function habitValue(h: Item, d: string, isDone: IsDone): HabitValue {
   const frequency = Math.min(2.65, Math.sqrt(7 / perWeek));
   const base = 10 * DIFFICULTY_WEIGHT[difficulty] * hardness * frequency;
   const bonus = 1 + 0.04 * Math.min(streak, 15);
+  const earn = Math.max(1, Math.round(base * bonus));
   return {
     habitId: h.id,
     title: h.title,
     base: Math.round(base),
-    earn: Math.max(1, Math.round(base * bonus)),
-    miss: Math.max(1, Math.round(base * MISS_FACTOR)),
+    earn,
+    miss: earn, // missing costs the same as ticking earns
     difficulty,
     hardness,
     frequency,
