@@ -5,7 +5,7 @@ import { useGame, useLevelChange } from "@/lib/useGame";
 import { Meter } from "./Meter";
 import type { GameState } from "@/lib/game";
 
-/** Compact level + daily quest panel for the Today page. */
+/** Compact level panel for the Today page. */
 export function GameSummary({ game: given }: { game?: GameState | null } = {}) {
   const own = useGame();
   const game = given ?? own.game;
@@ -27,20 +27,14 @@ export function GameSummary({ game: given }: { game?: GameState | null } = {}) {
         <Link href="/status" className="text-xs text-muted hover:text-text">Status ›</Link>
       </div>
       <Meter value={game.xpForNext ? game.xpIntoLevel / game.xpForNext : 1} height={6} label="XP to next level" />
-      <div className="text-xs text-muted flex justify-between">
+      <div className="text-xs text-muted flex flex-wrap justify-between gap-2">
         <span>{game.xpForNext ? `${game.xpIntoLevel} / ${game.xpForNext} XP` : "Max level"}</span>
-        <span>Streak {game.streak}</span>
+        {today.due > 0 && (
+          <span>
+            Today +{today.earnedSoFar} XP{today.atStake ? ` · −${today.atStake} XP if the rest stay unticked` : " · all done"}
+          </span>
+        )}
       </div>
-      {today.due > 0 && (
-        <div className="pt-1 space-y-1.5">
-          <div className="flex justify-between text-sm">
-            <span>Daily quest · need {Math.round(today.required * 100)}%</span>
-            <span className="font-semibold tabular-nums">{Math.round(today.pct * 100)}%</span>
-          </div>
-          <Meter value={today.pct} marker={today.required} height={10} label="Daily quest" />
-          <div className="text-xs text-muted">{today.cleared ? `Cleared · +${today.xpIfCleared} XP at midnight` : `Clear it for +${today.xpIfCleared} XP · the day is scored at midnight`}</div>
-        </div>
-      )}
     </section>
   );
 }
