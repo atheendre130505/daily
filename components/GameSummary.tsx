@@ -31,7 +31,7 @@ export function GameSummary({ game: given }: { game?: GameState | null } = {}) {
         <span>{game.xpForNext ? `${game.xpIntoLevel} / ${game.xpForNext} XP` : "Max level"}</span>
         {today.due > 0 && (
           <span>
-            Today +{today.earnedSoFar} XP{today.atStake ? ` · −${today.atStake} XP if the rest stay unticked` : " · all done"}
+            Today +{today.earnedSoFar} XP · {today.done}/{today.due} done
           </span>
         )}
       </div>

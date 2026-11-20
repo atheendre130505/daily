@@ -49,7 +49,6 @@ export default function StatusPage() {
         {today.due ? (
           <p className="text-sm text-muted">
             {today.done}/{today.due} done · <span className="text-text">+{today.earnedSoFar} XP</span> so far
-            {today.atStake ? ` · −${today.atStake} XP if the rest stay unticked when you start the next day` : " · all done"}
           </p>
         ) : (
           <p className="text-sm text-muted">No habits are due today.</p>
@@ -76,11 +75,11 @@ export default function StatusPage() {
         <details className="rounded-sm border border-line p-3">
           <summary className="cursor-pointer font-semibold">How it works</summary>
           <ul className="list-disc pl-5 mt-2 space-y-1 text-muted">
-            <li>Each habit is worth some XP (shown on Today). Tick it and you gain that XP; miss it and you lose the same amount.</li>
+            <li>Each habit is worth some XP (shown on Today). Tick it and you gain that XP. Missing it costs nothing; XP only goes up.</li>
             <li>A habit is worth more if it&apos;s harder, done less often in the week, or one you usually skip, and a bit more for each day in a row you do it.</li>
-            <li>Ticks count straight away. Unticked habits cost XP when you start the next day. Days you don&apos;t open the app count as missed.</li>
+            <li>Ticks count straight away.</li>
             <li>Stopped habits stop counting from the day after they stop.</li>
-            <li>Levels run 1–{MAX_LEVEL}. Each level needs a bit more XP than the last. Lose enough XP and you drop a level.</li>
+            <li>Levels run 1–{MAX_LEVEL}. Each level needs a bit more XP than the last.</li>
             <li>Hidden habits don&apos;t count. Everything is recalculated from your ticks, so Undo and edits apply straight away.</li>
           </ul>
         </details>

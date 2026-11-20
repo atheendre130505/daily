@@ -36,27 +36,19 @@ describe("XP", () => {
     expect(g.today.due).toBe(5);
   });
 
-  it("each past day nets ticks minus misses, by the same amounts", () => {
+  it("ticks add XP, misses take nothing away", () => {
     const g = run({ "2026-11-02": 3 }, "2026-11-03");
     const d = g.history[0];
     expect(d.done).toBe(3);
-    // all five habits are worth the same on day 1, so 3 done − 2 missed = 1 habit's worth
-    expect(d.earned / 3).toBeCloseTo(d.lost / 2);
-    expect(d.xp).toBe(d.earned - d.lost);
+    expect(d.lost).toBe(0);
+    expect(d.xp).toBe(d.earned);
+    const later = run({ "2026-11-02": 3 }, "2026-11-10"); // a week of nothing after
+    expect(later.xp).toBe(g.xp);
   });
 
-  it("today's ticks count now, today's misses only once the day is over", () => {
+  it("today's ticks count straight away", () => {
     const g = run({ "2026-11-02": 2 }, "2026-11-02");
     expect(g.xp).toBe(g.today.earnedSoFar);
-    expect(g.today.atStake).toBeGreaterThan(0);
-  });
-
-  it("missing everything loses XP and can drop levels", () => {
-    const perfect = Object.fromEntries(dateRange(START, "2026-11-15").map((d) => [d, 5]));
-    const up = run(perfect, "2026-11-16");
-    const down = run({ ...perfect, ...Object.fromEntries(dateRange("2026-11-16", "2026-11-22").map((d) => [d, 0])) }, "2026-11-23");
-    expect(up.level).toBeGreaterThan(1);
-    expect(down.xp).toBeLessThan(up.xp);
   });
 
   it("a stopped habit stops counting", () => {

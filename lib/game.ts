@@ -9,8 +9,8 @@
  *     personal hardness 0.75 (you always do it) … 1.5 (you rarely do it), from your last 28 scheduled days
  *     frequency         √(7 ÷ times scheduled per week): daily 1.0 · 3×/week 1.53 · weekly 2.65
  *     streak bonus      +4% per consecutive day done, up to +60%
- * A missed habit costs exactly what ticking it would have earned that day.
- * Levels 1–100; losing XP can drop a level; XP never goes below 0.
+ * A missed habit costs nothing: XP only goes up.
+ * Levels 1–100.
  */
 import type { Item } from "./types";
 import { addDays, dateRange, fromDateKey, toDateKey } from "./dates";
@@ -110,7 +110,7 @@ export function habitValue(h: Item, d: string, isDone: IsDone): HabitValue {
     title: h.title,
     base: Math.round(base),
     earn,
-    miss: earn, // missing costs the same as ticking earns
+    miss: 0, // missing costs nothing: XP only goes up
     difficulty,
     hardness,
     frequency,
@@ -155,8 +155,7 @@ export interface GameState {
 }
 
 /**
- * The whole system: each habit is worth some XP. Tick it → gain that XP. Miss it → lose the same amount.
- * Today's ticks count straight away; today's misses count once the day is over (Start next day).
+ * The whole system: each habit is worth some XP. Tick it → gain that XP. Missing it costs nothing.
  * Stopped, deleted or hidden habits don't count on days they aren't running.
  */
 export function computeGame(habitsAll: Item[], isDone: IsDone, startDate: string, today: string): GameState {
@@ -187,7 +186,7 @@ export function computeGame(habitsAll: Item[], isDone: IsDone, startDate: string
     const net = s.earned - s.lost;
     addXp(net);
     history.push({ date: d, due: s.values.length, done: s.done, earned: s.earned, lost: s.lost, xp: net });
-    log.push({ date: d, text: `${s.done}/${s.values.length} habits · +${s.earned} −${s.lost}`, xp: net });
+    log.push({ date: d, text: `${s.done}/${s.values.length} habits done`, xp: net });
   }
 
   const t = today >= startDate ? scoreDay(today) : null;
