@@ -2,20 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { GameSummary } from "@/components/GameSummary";
 import { useStore } from "@/lib/store";
-import { useGame } from "@/lib/useGame";
 import { addDays, fromDateKey, longDayLabel, timeLabel } from "@/lib/dates";
 import { eventOccurrences, habitDueOn } from "@/lib/recurrence";
-import { DIFFICULTY_LABELS, settingsOn } from "@/lib/habitSettings";
-import { currentStreak } from "@/lib/stats";
+import { settingsOn } from "@/lib/habitSettings";
 import { ItemEditor, blankItem } from "@/components/ItemEditor";
 import { LateNightNote, NextDayButton } from "@/components/NextDayButton";
 import { newPage, type Item } from "@/lib/types";
 
 export default function TodayPage() {
   const { items, pages, isDone, toggle, savePage, day: today } = useStore();
-  const { game } = useGame();
   const router = useRouter();
   const [viewDay, setDay] = useState<string | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
@@ -26,7 +22,6 @@ export default function TodayPage() {
     .filter((i) => i.type === "habit" && !settingsOn(i, day).hidden && habitDueOn(i, day))
     .sort((a, b) => a.sort_order - b.sort_order);
   const doneCount = habits.filter((h) => isDone(h.id, day)).length;
-  const values = new Map((game?.today.habits ?? []).map((v) => [v.habitId, v]));
 
   const events = useMemo(() => {
     const from = fromDateKey(day);
@@ -62,8 +57,6 @@ export default function TodayPage() {
         </div>
       )}
 
-      {isToday && <GameSummary game={game} />}
-
       <section>
         <div className="flex items-baseline justify-between mb-2">
           <h2 className="font-semibold">
@@ -73,7 +66,6 @@ export default function TodayPage() {
         </div>
         <ul className="divide-y divide-line border-y border-line">
           {habits.map((h) => {
-            const v = isToday ? values.get(h.id) : undefined;
             const done = isDone(h.id, day);
             return (
               <li key={h.id} className="flex items-center gap-3 py-2.5">
@@ -90,13 +82,6 @@ export default function TodayPage() {
                   {h.description && <span className="block text-xs text-muted">{h.description}</span>}
                 </button>
                 {h.reminder_time && <span className="text-xs text-muted">at {h.reminder_time.slice(0, 5)}</span>}
-                <span className="text-xs text-muted w-14 text-right">{DIFFICULTY_LABELS[settingsOn(h, day).difficulty]}</span>
-                {v && (
-                  <span className="text-xs w-16 text-right tabular-nums" title={`Tick it: +${v.earn} XP`}>
-                    {done ? `+${v.earn} XP` : <span className="text-muted">+{v.earn} XP</span>}
-                  </span>
-                )}
-                <span className="text-xs text-muted w-16 text-right">streak {currentStreak(h, isDone, today)}</span>
               </li>
             );
           })}

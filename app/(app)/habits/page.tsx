@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { addDays, dateRange, dayMonthLabel, shortDayLabel } from "@/lib/dates";
 import { habitDueOn } from "@/lib/recurrence";
-import { completionRate, currentStreak } from "@/lib/stats";
+import { completionRate } from "@/lib/stats";
 import { habitSegments, type Segment } from "@/lib/segments";
 import { ItemEditor, blankItem, restartHabit } from "@/components/ItemEditor";
 import { StopHabitsDialog } from "@/components/StopHabitsDialog";
@@ -99,7 +99,6 @@ export default function HabitsPage() {
 
 function SegmentTable({ seg, today, showHeader, onEdit }: { seg: Segment; today: string; showHeader: boolean; onEdit: (h: Item) => void }) {
   const { isDone, toggle } = useStore();
-  const isCurrent = seg.from <= today && today <= seg.to;
   // same habit name stopped and started on the same day = a restart
   const stoppedNames = new Set(seg.stopped.map(norm));
   const restarted = new Set(seg.started.map(norm).filter((n) => stoppedNames.has(n)));
@@ -180,16 +179,6 @@ function SegmentTable({ seg, today, showHeader, onEdit }: { seg: Segment; today:
                   );
                 })}
               </tr>
-              {isCurrent && (
-                <tr className="text-muted text-xs">
-                  <td className="sticky left-0 bg-bg py-2 pl-2 border-r border-line">Streak</td>
-                  {seg.habits.map((h) => (
-                    <td key={h.id} className="px-3 py-2 border-r border-line">
-                      {currentStreak(h, isDone, today)}
-                    </td>
-                  ))}
-                </tr>
-              )}
             </tfoot>
           </table>
         </div>

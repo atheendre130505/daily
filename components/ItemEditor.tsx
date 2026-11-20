@@ -6,7 +6,7 @@ import { newItem } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { WEEKDAYS, describeRule } from "@/lib/recurrence";
 import { addDays, todayKey } from "@/lib/dates";
-import { DEFAULT_DIFFICULTY, DIFFICULTY_LABELS, hasHistory, withVersionedSettings } from "@/lib/habitSettings";
+import { DEFAULT_DIFFICULTY, hasHistory, withVersionedSettings } from "@/lib/habitSettings";
 
 type Repeat = "none" | "daily" | "weekdays" | "weekly" | "custom";
 
@@ -149,23 +149,9 @@ export function ItemEditor({ item, onClose }: { item: Item; onClose: () => void 
 
         {draft.type === "habit" && (
           <div className="space-y-3">
-            <Field label="Difficulty (sets how much XP it's worth)">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => set({ difficulty: n })}
-                    className={`flex-1 py-1.5 rounded text-xs ${(draft.difficulty ?? DEFAULT_DIFFICULTY) === n ? "bg-accent text-bg font-semibold" : "bg-panel-2 text-muted"}`}
-                  >
-                    {DIFFICULTY_LABELS[n]}
-                  </button>
-                ))}
-              </div>
-            </Field>
             {locked && (
               <p className="text-xs text-muted">
-                Changes to repeat, difficulty or hidden apply from today. Earlier days keep their old settings, so past XP doesn&apos;t change.
+                Changes to repeat or hidden apply from today. Earlier days keep their old settings.
               </p>
             )}
             <div className="grid grid-cols-2 gap-2">

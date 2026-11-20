@@ -11,7 +11,6 @@ import { Icon } from "./Icon";
 
 const NAV = [
   { href: "/today", label: "Today", icon: "today" },
-  { href: "/status", label: "Status", icon: "status" },
   { href: "/habits", label: "Habits", icon: "habits" },
   { href: "/notes", label: "Notes", icon: "notes" },
 ];
@@ -171,7 +170,7 @@ function Frame({ children }: { children: React.ReactNode }) {
       </main>
       <UndoToast />
 
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-4 border-t border-line bg-panel pb-[env(safe-area-inset-bottom)]">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-3 border-t border-line bg-panel pb-[env(safe-area-inset-bottom)]">
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${path.startsWith(n.href) ? "text-text" : "text-muted"}`}>
             <Icon name={n.icon} size={20} />
