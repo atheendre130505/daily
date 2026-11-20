@@ -4,19 +4,12 @@ import { useGame } from "@/lib/useGame";
 import { Meter } from "@/components/Meter";
 import { MAX_LEVEL } from "@/lib/game";
 import { dayMonthLabel, todayKey } from "@/lib/dates";
-import { useStore } from "@/lib/store";
 
-const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 
 export default function StatusPage() {
   const { game, startDate, setStartDate } = useGame();
-  const { items } = useStore();
   if (!game) return <div className="p-10 text-muted">Loading…</div>;
   const { today } = game;
-  const firstHabitDay = items
-    .filter((i) => i.type === "habit" && i.active_from)
-    .map((i) => i.active_from!)
-    .sort()[0];
 
   return (
     <div className="p-4 md:p-10 max-w-3xl space-y-10">
@@ -55,21 +48,6 @@ export default function StatusPage() {
         )}
       </section>
 
-      {/* Log */}
-      <section className="space-y-2">
-        <h2 className="font-semibold">Log</h2>
-        <ul className="divide-y divide-line border-y border-line text-sm">
-          {game.log.slice(0, 40).map((l, i) => (
-            <li key={i} className="flex gap-3 py-2">
-              <span className="text-muted w-14 shrink-0">{dayMonthLabel(l.date)}</span>
-              <span className="flex-1">{l.text}</span>
-              <span className={`tabular-nums ${l.xp < 0 ? "text-muted" : ""}`}>{l.xp ? `${signed(l.xp)} XP` : ""}</span>
-            </li>
-          ))}
-          {!game.log.length && <li className="py-2 text-muted">Nothing yet. A day is added here when you start the next one.</li>}
-        </ul>
-      </section>
-
       {/* Rules + start date */}
       <section className="space-y-3 text-sm">
         <details className="rounded-sm border border-line p-3">
@@ -86,11 +64,6 @@ export default function StatusPage() {
         <div className="flex flex-wrap items-center gap-2 text-muted">
           <span>Counting from {startDate ? dayMonthLabel(startDate) : "…"}.</span>
           <button className="btn text-xs" onClick={() => setStartDate(todayKey())}>Restart from today</button>
-          {firstHabitDay && firstHabitDay !== startDate && (
-            <button className="btn text-xs" onClick={() => setStartDate(firstHabitDay)}>
-              Count my history from {dayMonthLabel(firstHabitDay)}
-            </button>
-          )}
         </div>
       </section>
     </div>

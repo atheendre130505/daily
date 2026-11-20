@@ -45,10 +45,11 @@ export default function TodayPage() {
   return (
     <div className="p-4 md:p-10 max-w-3xl space-y-8">
       <header className="flex items-center gap-2">
-        <button className="btn" onClick={() => setDay(addDays(day, -1))}>‹</button>
+        {/* past days aren't shown */}
+        <button className="btn disabled:opacity-30" disabled={day <= today} onClick={() => setDay(addDays(day, -1))}>‹</button>
         <div className="flex-1">
           <h1 className="text-2xl md:text-3xl font-bold">{isToday ? "Today" : longDayLabel(day)}</h1>
-          <div className="text-muted text-sm">{isToday ? longDayLabel(day) : day < today ? "Past day · view only" : "Upcoming · view only"}</div>
+          <div className="text-muted text-sm">{isToday ? longDayLabel(day) : "Upcoming · view only"}</div>
         </div>
         {!isToday && <button className="btn" onClick={() => setDay(null)}>Today</button>}
         <button className="btn" onClick={() => setDay(addDays(day, 1))}>›</button>
@@ -101,7 +102,7 @@ export default function TodayPage() {
           })}
           {!habits.length && <li className="py-3 text-muted text-sm">No habits scheduled.</li>}
         </ul>
-        {!isToday && <p className="text-xs text-muted mt-2">Only today&apos;s habits can be ticked. Past and future days are view only.</p>}
+        {!isToday && <p className="text-xs text-muted mt-2">Only today&apos;s habits can be ticked.</p>}
       </section>
 
       <section>
