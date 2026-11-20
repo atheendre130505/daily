@@ -68,7 +68,7 @@ export async function setPassword(password: string): Promise<void> {
 export async function sendEmailCode(email: string): Promise<void> {
   const { error } = await supabaseBrowser().auth.signInWithOtp({
     email: email.trim(),
-    options: { emailRedirectTo: `${window.location.origin}${BASE}/today/`, shouldCreateUser: false },
+    options: { emailRedirectTo: `${window.location.origin}${BASE}/habits/`, shouldCreateUser: false },
   });
   if (error) throw error;
 }

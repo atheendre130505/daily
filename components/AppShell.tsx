@@ -10,7 +10,7 @@ import { UndoButton, UndoToast } from "./UndoBar";
 import { Icon } from "./Icon";
 
 const NAV = [
-  { href: "/today", label: "Today", icon: "today" },
+  { href: "/habits", label: "Habits", icon: "habits" },
   { href: "/notes", label: "Notes", icon: "notes" },
 ];
 

@@ -2,7 +2,7 @@
   "name": "Daily",
   "short_name": "Daily",
   "description": "Habits, calendar and notes",
-  "start_url": "./today/",
+  "start_url": "./habits/",
   "display": "browser",
   "background_color": "#191919",
   "theme_color": "#191919",
