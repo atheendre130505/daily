@@ -3,25 +3,28 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
-import { addDays, fromDateKey, longDayLabel, timeLabel } from "@/lib/dates";
+import { addDays, dayMonthLabel, fromDateKey, longDayLabel, timeLabel } from "@/lib/dates";
 import { eventOccurrences, habitDueOn } from "@/lib/recurrence";
 import { settingsOn } from "@/lib/habitSettings";
-import { ItemEditor, blankItem } from "@/components/ItemEditor";
+import { ItemEditor, blankItem, restartHabit } from "@/components/ItemEditor";
+import { StopHabitsDialog } from "@/components/StopHabitsDialog";
 import { LateNightNote, NextDayButton } from "@/components/NextDayButton";
 import { newPage, type Item } from "@/lib/types";
 
+/** The one page: today's habits to tick, today's events, and the daily note. */
 export default function TodayPage() {
-  const { items, pages, isDone, toggle, savePage, day: today } = useStore();
+  const { items, pages, isDone, toggle, saveItem, savePage, day } = useStore();
   const router = useRouter();
-  const [viewDay, setDay] = useState<string | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
-  const day = viewDay ?? today;
-  const isToday = day === today;
+  const [stopping, setStopping] = useState(false);
 
-  const habits = items
-    .filter((i) => i.type === "habit" && !settingsOn(i, day).hidden && habitDueOn(i, day))
-    .sort((a, b) => a.sort_order - b.sort_order);
+  const allHabits = items.filter((i) => i.type === "habit");
+  const habits = allHabits.filter((i) => !settingsOn(i, day).hidden && habitDueOn(i, day)).sort((a, b) => a.sort_order - b.sort_order);
   const doneCount = habits.filter((h) => isDone(h.id, day)).length;
+  const running = new Set(allHabits.filter((h) => !h.active_until || h.active_until >= day).map((h) => h.title.trim().toLowerCase()));
+  const stopped = allHabits
+    .filter((h) => h.active_until && h.active_until < day && !running.has(h.title.trim().toLowerCase()))
+    .sort((a, b) => (b.active_until ?? "").localeCompare(a.active_until ?? ""));
 
   const events = useMemo(() => {
     const from = fromDateKey(day);
@@ -39,29 +42,23 @@ export default function TodayPage() {
 
   return (
     <div className="p-4 md:p-10 max-w-3xl space-y-8">
-      <header className="flex items-center gap-2">
-        {/* past days aren't shown */}
-        <button className="btn disabled:opacity-30" disabled={day <= today} onClick={() => setDay(addDays(day, -1))}>‹</button>
+      <header className="flex flex-wrap items-center gap-3">
         <div className="flex-1">
-          <h1 className="text-2xl md:text-3xl font-bold">{isToday ? "Today" : longDayLabel(day)}</h1>
-          <div className="text-muted text-sm">{isToday ? longDayLabel(day) : "Upcoming · view only"}</div>
+          <h1 className="text-2xl md:text-3xl font-bold">Today</h1>
+          <div className="text-muted text-sm">{longDayLabel(day)}</div>
         </div>
-        {!isToday && <button className="btn" onClick={() => setDay(null)}>Today</button>}
-        <button className="btn" onClick={() => setDay(addDays(day, 1))}>›</button>
+        <NextDayButton />
       </header>
-
-      {isToday && (
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex-1 min-w-0"><LateNightNote /></div>
-          <NextDayButton />
-        </div>
-      )}
+      <LateNightNote />
 
       <section>
-        <div className="flex items-baseline justify-between mb-2">
-          <h2 className="font-semibold">
+        <div className="flex items-baseline gap-3 mb-2">
+          <h2 className="font-semibold flex-1">
             Habits <span className="text-muted font-normal text-sm">{doneCount}/{habits.length}</span>
           </h2>
+          {habits.length > 0 && (
+            <button className="text-sm text-muted hover:text-text" onClick={() => setStopping(true)}>Stop habits…</button>
+          )}
           <button className="text-sm text-muted hover:text-text" onClick={() => setEditing(blankItem("habit"))}>+ Habit</button>
         </div>
         <ul className="divide-y divide-line border-y border-line">
@@ -69,14 +66,7 @@ export default function TodayPage() {
             const done = isDone(h.id, day);
             return (
               <li key={h.id} className="flex items-center gap-3 py-2.5">
-                <input
-                  type="checkbox"
-                  className="check disabled:opacity-40 disabled:cursor-not-allowed"
-                  checked={done}
-                  disabled={!isToday}
-                  title={isToday ? undefined : "Only today can be ticked"}
-                  onChange={() => toggle(h.id, day)}
-                />
+                <input type="checkbox" className="check" checked={done} onChange={() => toggle(h.id, day)} aria-label={h.title} />
                 <button className="flex-1 text-left" onClick={() => setEditing(h)}>
                   <span className={done ? "text-muted line-through" : ""}>{h.title}</span>
                   {h.description && <span className="block text-xs text-muted">{h.description}</span>}
@@ -85,9 +75,8 @@ export default function TodayPage() {
               </li>
             );
           })}
-          {!habits.length && <li className="py-3 text-muted text-sm">No habits scheduled.</li>}
+          {!habits.length && <li className="py-3 text-muted text-sm">No habits today.</li>}
         </ul>
-        {!isToday && <p className="text-xs text-muted mt-2">Only today&apos;s habits can be ticked.</p>}
       </section>
 
       <section>
@@ -97,8 +86,7 @@ export default function TodayPage() {
             className="text-sm text-muted hover:text-text"
             onClick={() => {
               const s = fromDateKey(day);
-              const now = new Date();
-              s.setHours(isToday ? now.getHours() + 1 : 9, 0, 0, 0);
+              s.setHours(new Date().getHours() + 1, 0, 0, 0);
               setEditing(blankItem("event", { start_at: s.toISOString(), end_at: new Date(s.getTime() + 3600_000).toISOString() }));
             }}
           >
@@ -125,7 +113,23 @@ export default function TodayPage() {
         <button className="btn" onClick={openDailyNote}>Daily note</button>
       </section>
 
+      {stopped.length > 0 && (
+        <details className="text-sm">
+          <summary className="cursor-pointer text-muted">Stopped habits ({stopped.length})</summary>
+          <ul className="divide-y divide-line border-y border-line mt-2">
+            {stopped.map((h) => (
+              <li key={h.id} className="flex items-center gap-3 py-2">
+                <button className="hover:underline" onClick={() => setEditing(h)}>{h.title}</button>
+                <span className="text-muted flex-1">stopped {dayMonthLabel(h.active_until!)}</span>
+                <button className="btn text-xs" onClick={() => saveItem(restartHabit(h, day, allHabits), `Restarted "${h.title}"`)}>Start again</button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
       {editing && <ItemEditor item={editing} onClose={() => setEditing(null)} />}
+      {stopping && <StopHabitsDialog onClose={() => setStopping(false)} />}
     </div>
   );
 }

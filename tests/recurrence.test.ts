@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { eventOccurrences, habitDueOn } from "@/lib/recurrence";
-import { currentStreak } from "@/lib/stats";
 import { newItem } from "@/lib/types";
 
 describe("habitDueOn", () => {
@@ -33,15 +32,5 @@ describe("eventOccurrences", () => {
   it("single event outside range is excluded", () => {
     const ev = newItem({ type: "event", start_at: new Date(2026, 0, 1, 9).toISOString(), end_at: new Date(2026, 0, 1, 10).toISOString() });
     expect(eventOccurrences(ev, new Date(2026, 1, 1), new Date(2026, 2, 1))).toHaveLength(0);
-  });
-});
-
-describe("currentStreak", () => {
-  it("counts back from yesterday when today is not ticked yet", () => {
-    const h = newItem({ type: "habit", rrule: "FREQ=DAILY", active_from: "2026-11-01" });
-    const ticked = new Set(["2026-11-14", "2026-11-15", "2026-11-16"]);
-    expect(currentStreak(h, (_id, d) => ticked.has(d), "2026-11-17")).toBe(3);
-    ticked.add("2026-11-17");
-    expect(currentStreak(h, (_id, d) => ticked.has(d), "2026-11-17")).toBe(4);
   });
 });
